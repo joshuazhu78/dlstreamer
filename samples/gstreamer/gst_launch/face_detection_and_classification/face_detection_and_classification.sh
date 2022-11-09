@@ -9,6 +9,8 @@ set -e
 INPUT=${1:-https://github.com/intel-iot-devkit/sample-videos/raw/master/head-pose-face-detection-female-and-male.mp4}
 DEVICE=${2:-CPU}
 OUTPUT=${3:-display} # Supported values: display, fps, json, display-and-json, "host=192.168.251.1 port=9001"
+OUTPUTFORMAT=${4:-file} # Supported values: file, console
+FPSCOUNTER=${5:-fps} # Supported values: fps, nofps
 
 MODEL1=face-detection-adas-0001
 MODEL2=age-gender-recognition-retail-0013
@@ -25,16 +27,27 @@ else
   SOURCE_ELEMENT="filesrc location=${INPUT}"
 fi
 
+if [[ $OUTPUTFORMAT == "console" ]]; then
+  OUTPUT_PROPERTY=""
+else
+  rm -f output.json
+  OUTPUT_PROPERTY="file-path=$OUTPUTFILENAME"
+fi
+
+if [[ $FPSCOUNTER == 'fps' ]]; then
+  FPSCOUNTER="gvafpscounter !"
+else
+  FPSCOUNTER=""
+fi
+
 if [[ $OUTPUT == "display" ]] || [[ -z $OUTPUT ]]; then
-  SINK_ELEMENT="gvawatermark ! videoconvert ! gvafpscounter ! autovideosink sync=false"
+  SINK_ELEMENT="gvawatermark ! videoconvert ! $FPSCOUNTER autovideosink sync=false"
 elif [[ $OUTPUT == "fps" ]]; then
-  SINK_ELEMENT="gvafpscounter ! fakesink async=false "
+  SINK_ELEMENT="$FPSCOUNTER fakesink async=false "
 elif [[ $OUTPUT == "json" ]]; then
-  rm -f output.json
-  SINK_ELEMENT="gvametaconvert ! gvametapublish file-format=json-lines file-path=output.json ! fakesink async=false "
+  SINK_ELEMENT="gvametaconvert ! gvametapublish file-format=json-lines $OUTPUT_PROPERTY ! fakesink async=false "
 elif [[ $OUTPUT == "display-and-json" ]]; then
-  rm -f output.json
-  SINK_ELEMENT="gvawatermark ! gvametaconvert ! gvametapublish file-format=json-lines file-path=output.json ! videoconvert ! gvafpscounter ! autovideosink sync=false"
+  SINK_ELEMENT="gvawatermark ! gvametaconvert ! gvametapublish file-format=json-lines $OUTPUT_PROPERTY ! videoconvert ! $FPSCOUNTER autovideosink sync=false"
 elif [[ $OUTPUT == *"port="* ]]; then
   SINK_ELEMENT="x264enc ! rtph264pay ! udpsink $OUTPUT"
 else
