@@ -9,7 +9,7 @@ set -e
 INPUT=${1:-https://github.com/intel-iot-devkit/sample-videos/raw/master/head-pose-face-detection-female-and-male.mp4}
 DEVICE=${2:-CPU}
 OUTPUT=${3:-display} # Supported values: display, fps, json, display-and-json, "host=192.168.251.1 port=9001"
-OUTPUTFORMAT=${4:-file} # Supported values: file, console
+OUTPUTFORMAT=${4:-file} # Supported values: file, console, fifo
 FPSCOUNTER=${5:-fps} # Supported values: fps, nofps
 
 MODEL1=face-detection-adas-0001
@@ -27,11 +27,14 @@ else
   SOURCE_ELEMENT="filesrc location=${INPUT}"
 fi
 
+rm -f output.json
 if [[ $OUTPUTFORMAT == "console" ]]; then
   OUTPUT_PROPERTY=""
+elif [[ $OUTPUTFORMAT == "file" ]]; then
+  OUTPUT_PROPERTY="file-path=output.json"
 else
-  rm -f output.json
-  OUTPUT_PROPERTY="file-path=$OUTPUTFILENAME"
+  mkfifo output.json
+  OUTPUT_PROPERTY="file-path=output.json"
 fi
 
 if [[ $FPSCOUNTER == 'fps' ]]; then
