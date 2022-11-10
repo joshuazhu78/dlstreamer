@@ -55,7 +55,7 @@ elif [[ $OUTPUT == *"port="* ]]; then
   SINK_ELEMENT="x264enc ! rtph264pay ! udpsink $OUTPUT"
 else
   echo Error wrong value for OUTPUT parameter
-  echo Valid values: "display" - render to screen, "fps" - print FPS, "json" - write to output.json, "display-and-json" - render to screen and write to output.json
+  echo Valid values: "display" - render to screen, "fps" - print FPS, "json" - write to output.json, "display-and-json" - render to screen and write to output.json, "host=192.168.251.1 port=9001" - stream video to remote host
   exit
 fi
 
