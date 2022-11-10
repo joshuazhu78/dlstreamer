@@ -108,5 +108,11 @@ The sample
 * starts the command and either visualizes video with bounding boxes around detected faces, facial landmarks points and text with classification results (age/gender, emotion) for each detected face or
 prints out fps if you set SINK_ELEMENT = fps
 
+### Dynamically provisioned 5G QoS
+
+Below video shows a demo of dynamic provisioned 5G QoS driven by face detection.
+
+[![facedetection_af](./images/fd-af.png)](http://172.16.113.107/facedetection-af.mp4)
+
 ## See also
 * [Samples overview](../../README.md)
