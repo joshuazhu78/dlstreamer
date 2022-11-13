@@ -67,12 +67,12 @@ If parameter is not specified, the sample by default streams video example from 
 
 At the server:
 ```
-$ /face_detection_and_classification.sh port=9001 CPU display-and-json fifo nofps
+$ ./face_detection_and_classification.sh port=9001 CPU display-and-json fifo nofps
 ```
 
 At the client to stream from USB camera:
 ```
-$ ./face_detection_and_classification.sh /dev/video0 CPU "host=192.168.251.1 port=9001"
+$ ./face_detection_and_classification.sh /dev/video0 CPU "host=192.168.250.1 port=9001"
 ```
 
 ### Run the 5G/AF
@@ -82,24 +82,7 @@ If the client and server are running over a 5G network, additionally AF can be r
 ```
 $ go run AF.go
 ```
-
-AF function usage is as below:
-
-```
-Usage of AF:
-  -fifoFile string
-        fifo filename (default "output.json")
-  -inactiveTimer uint
-        Inactive length before firing NEF delete (default 10)
-  -nefJson string
-        NEF post json for QoS provisioning
-  -nefSvcEndpoint string
-        NEF service endpoint
-```
-
-The AF logic is described as two states machine:
-
-![af_logic](./images/af.png)
+Detailed AF description can be found in [af](https://github.com/joshuazhu78/af)
 
 ## Sample Output
 
@@ -107,12 +90,6 @@ The sample
 * prints gst-launch-1.0 full command line into console
 * starts the command and either visualizes video with bounding boxes around detected faces, facial landmarks points and text with classification results (age/gender, emotion) for each detected face or
 prints out fps if you set SINK_ELEMENT = fps
-
-### Dynamically provisioned 5G QoS
-
-Below video shows a demo of dynamic provisioned 5G QoS driven by face detection.
-
-[![facedetection_af](./images/fd-af.png)](http://172.16.113.107/facedetection-af.mp4)
 
 ## See also
 * [Samples overview](../../README.md)

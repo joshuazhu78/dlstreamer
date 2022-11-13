@@ -11,6 +11,7 @@ DEVICE=${2:-CPU}
 OUTPUT=${3:-display} # Supported values: display, fps, json, display-and-json, "host=192.168.251.1 port=9001"
 OUTPUTFORMAT=${4:-file} # Supported values: file, console, fifo
 FPSCOUNTER=${5:-fps} # Supported values: fps, nofps
+METAFILENAME=/tmp/output.json
 
 MODEL1=face-detection-adas-0001
 MODEL2=age-gender-recognition-retail-0013
@@ -18,7 +19,7 @@ MODEL3=emotions-recognition-retail-0003
 MODEL4=landmarks-regression-retail-0009
 
 if [[ $INPUT == "/dev/video"* ]]; then
-  SOURCE_ELEMENT="v4l2src device=${INPUT} ! jpegdec"
+  SOURCE_ELEMENT="v4l2src device=${INPUT} ! jpegdec ! videoconvert ! videoscale ! video/x-raw,width=1280"
 elif [[ $INPUT == *"://"* ]]; then
   SOURCE_ELEMENT="urisourcebin buffer-size=4096 uri=${INPUT}"
 elif [[ $INPUT == *"port="* ]]; then
@@ -27,14 +28,14 @@ else
   SOURCE_ELEMENT="filesrc location=${INPUT}"
 fi
 
-rm -f output.json
+rm -f ${METAFILENAME}
 if [[ $OUTPUTFORMAT == "console" ]]; then
   OUTPUT_PROPERTY=""
 elif [[ $OUTPUTFORMAT == "file" ]]; then
-  OUTPUT_PROPERTY="file-path=output.json"
+  OUTPUT_PROPERTY="file-path=${METAFILENAME}"
 else
-  mkfifo output.json
-  OUTPUT_PROPERTY="file-path=output.json"
+  mkfifo ${METAFILENAME}
+  OUTPUT_PROPERTY="file-path=${METAFILENAME}"
 fi
 
 if [[ $FPSCOUNTER == 'fps' ]]; then
@@ -55,7 +56,7 @@ elif [[ $OUTPUT == *"port="* ]]; then
   SINK_ELEMENT="x264enc ! rtph264pay ! udpsink $OUTPUT"
 else
   echo Error wrong value for OUTPUT parameter
-  echo Valid values: "display" - render to screen, "fps" - print FPS, "json" - write to output.json, "display-and-json" - render to screen and write to output.json, "host=192.168.251.1 port=9001" - stream video to remote host
+  echo Valid values: "display" - render to screen, "fps" - print FPS, "json" - write to ${METAFILENAME}, "display-and-json" - render to screen and write to ${METAFILENAME}, "host=192.168.251.1 port=9001" - stream video to remote host
   exit
 fi
 
