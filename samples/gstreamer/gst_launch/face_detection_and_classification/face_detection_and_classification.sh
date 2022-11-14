@@ -6,11 +6,67 @@
 # ==============================================================================
 set -e
 
-INPUT=${1:-https://github.com/intel-iot-devkit/sample-videos/raw/master/head-pose-face-detection-female-and-male.mp4}
-DEVICE=${2:-CPU}
-OUTPUT=${3:-display} # Supported values: display, fps, json, display-and-json, "host=192.168.251.1 port=9001"
-OUTPUTFORMAT=${4:-file} # Supported values: file, console, fifo
-FPSCOUNTER=${5:-fps} # Supported values: fps, nofps
+INPUT="https://github.com/intel-iot-devkit/sample-videos/raw/master/head-pose-face-detection-female-and-male.mp4" # Supported values: url, /dev/video0, udpsrc, filesrc
+DEVICE="CPU"        # Supported values: CPU, GPU
+OUTPUT="display"    # Supported values: display, fps, json, display-and-json, "host=192.168.251.1 port=9001"
+OUTPUTFORMAT="file" # Supported values: file, console, fifo
+FPSCOUNTER="fps"    # Supported values: fps, nofps
+INPUTWIDTH=         # Input video width, no to use src resolution
+
+__usage="
+Usage: $(basename $0) [OPTIONS]
+
+Options:
+  -i, --input   </dev/video*|://|port=UDPSRC|FILESRC>            Input type
+  -d, --device  <CPU|GPU>                                        Compute device type, not applicable for output=\"port=\"
+  -o, --output  <display|fps|json|display-and-json|port=UDPSINK> Output format
+  -f, --fileformat <console|file|fifo>                           Output file format
+  -p, --sinkfps <fps|nofps>                                      Output FPS counter or not
+  -w, --width   <width>                                          Input video width
+"
+usage() { echo "$__usage" 1>&2; exit 1; }
+
+while getopts ":i:d:o:f:p:w:" o; do
+    case "${o}" in
+        i|input)
+            INPUT=${OPTARG}
+            ;;
+        d|device)
+            DEVICE=${OPTARG}
+            ;;
+        o|output)
+            OUTPUT=${OPTARG}
+            ;;
+        f|fileformat)
+            OUTPUTFORMAT=${OPTARG}
+            ;;
+        p|sinkfps)
+            FPSCOUNTER=${OPTARG}
+            ;;
+        w|width)
+            INPUTWIDTH=${OPTARG}
+            ;;
+        *)
+            usage
+            ;;
+    esac
+done
+shift $((OPTIND-1))
+
+if [ -z "${INPUTWIDTH}" ]; then
+  SOURCE_CONVERT=""
+else
+  SOURCE_CONVERT="! videoconvert ! videoscale ! video/x-raw,width=${INPUTWIDTH},framerate=30/1"
+fi
+
+if [[ $OUTPUT == *"port="* ]]; then
+  echo "run as client: $(basename $0) -i ${INPUT} -w ${INPUTWIDTH} -o ${OUTPUT}"
+elif [[ $INPUT == *"port="* ]]; then
+  echo "run as server: $(basename $0) -i ${INPUT} -d ${DEVICE} -o ${OUTPUT} -f ${OUTPUTFORMAT} -p ${FPSCOUNTER}"
+else
+  echo "run on single host: $(basename $0) -i ${INPUT} -w ${INPUTWIDTH} -d ${DEVICE} -o ${OUTPUT} -f ${OUTPUTFORMAT} -p ${FPSCOUNTER}"
+fi
+
 METAFILENAME=/tmp/output.json
 
 MODEL1=face-detection-adas-0001
@@ -19,13 +75,13 @@ MODEL3=emotions-recognition-retail-0003
 MODEL4=landmarks-regression-retail-0009
 
 if [[ $INPUT == "/dev/video"* ]]; then
-  SOURCE_ELEMENT="v4l2src device=${INPUT} ! jpegdec ! videoconvert ! videoscale ! video/x-raw,width=1280"
+  SOURCE_ELEMENT="v4l2src device=${INPUT} ! jpegdec ${SOURCE_CONVERT}"
 elif [[ $INPUT == *"://"* ]]; then
-  SOURCE_ELEMENT="urisourcebin buffer-size=4096 uri=${INPUT}"
+  SOURCE_ELEMENT="urisourcebin buffer-size=4096 uri=${INPUT} ${SOURCE_CONVERT}"
 elif [[ $INPUT == *"port="* ]]; then
   SOURCE_ELEMENT="udpsrc ${INPUT} caps = \"application/x-rtp, media=(string)video, clock-rate=(int)90000, encoding-name=(string)H264 \" ! rtpjitterbuffer"
 else
-  SOURCE_ELEMENT="filesrc location=${INPUT}"
+  SOURCE_ELEMENT="filesrc location=${INPUT}  ${SOURCE_CONVERT}"
 fi
 
 rm -f ${METAFILENAME}

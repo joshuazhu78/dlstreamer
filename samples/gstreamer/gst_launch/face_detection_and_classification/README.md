@@ -36,43 +36,57 @@ The sample contains `model_proc` subfolder with .json files for each model with 
 ## Running
 
 ```sh
-./face_detection_and_classification.sh [INPUT_VIDEO] [DEVICE] [SINK_ELEMENT] [OUTPUTFORMAT] [FPSCOUNTER]
+./face_detection_and_classification.sh
+
+Usage: ./face_detection_and_classification.sh [OPTIONS]
+
+Options:
+  -i, --input   </dev/video*|://|port=UDPSRC|FILESRC>            Input type
+  -d, --device  <CPU|GPU>                                        Compute device type, not applicable for output="port="
+  -o, --output  <display|fps|json|display-and-json|port=UDPSINK> Output format
+  -f, --fileformat <console|file|fifo>                           Output file format
+  -p, --sinkfps <fps|nofps>                                      Output FPS counter or not
+  -w, --width   <width>                                          Input video width
 ```
-The sample takes five command-line *optional* parameters:
-1. [INPUT_VIDEO] to specify input video file.
+The sample takes six command-line *optional* parameters:
+1. [-i] to specify input video file.
 The input could be
 * local video file
 * web camera device (ex. `/dev/video0`)
 * RTSP camera (URL starting with `rtsp://`) or other streaming source (ex URL starting with `http://`)
 * udp source (ex. `port=9001`)
 If parameter is not specified, the sample by default streams video example from HTTPS link (utilizing `urisourcebin` element) so requires internet conection.
-2. [DEVICE] to specify device for detection and classification.
+2. [-d] to specify device for detection and classification.
         Please refer to OpenVINO™ toolkit documentation for supported devices.
         https://docs.openvinotoolkit.org/latest/openvino_docs_IE_DG_supported_plugins_Supported_Devices.html
         You can find what devices are supported on your system by running following OpenVINO™ toolkit sample:
         https://docs.openvinotoolkit.org/latest/openvino_inference_engine_ie_bridges_python_sample_hello_query_device_README.html
-3. [SINK_ELEMENT] to choose between render mode and fps throughput mode:
+3. [-o] to choose between render mode and fps throughput mode:
     * display - render (default)
     * fps - FPS only
     * udp sink - remote udp server (for all video analytics)
-4. [OUTPUTFORMAT] to choose format gvametapublish will output:
+4. [-f] to choose format gvametapublish will output:
     * file - to file named output.json
     * console - to terminal console
     * fifo - to a linux fifo named output.json
-5. [FPSCOUNTER] to choose whether to output FPS or not:
+5. [-p] to choose whether to output FPS or not:
     * fps - count FPS and output (default)
     * nofps - do not count FPS
+6. [-s] to select source video resolution:
+    * not specified - use video source resolution (default)
+    * 1280 - for 720P
+    * 1920 - for 1080P
 
 ### Run in client/server mode
 
 At the server:
 ```
-$ ./face_detection_and_classification.sh port=9001 CPU display-and-json fifo nofps
+$ ./face_detection_and_classification.sh -i port=9001 -o display-and-json -f fifo -p nofps
 ```
 
 At the client to stream from USB camera:
 ```
-$ ./face_detection_and_classification.sh /dev/video0 CPU "host=192.168.250.1 port=9001"
+$ ./face_detection_and_classification.sh -i /dev/video0 -o "host=192.168.250.1 port=9001"
 ```
 
 ### Run the 5G/AF
