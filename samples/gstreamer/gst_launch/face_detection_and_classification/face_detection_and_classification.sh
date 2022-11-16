@@ -12,6 +12,7 @@ OUTPUT="display"    # Supported values: display, fps, json, display-and-json, "h
 OUTPUTFORMAT="file" # Supported values: file, console, fifo
 FPSCOUNTER="fps"    # Supported values: fps, nofps
 INPUTWIDTH=         # Input video width, no to use src resolution
+SRCRECORDFILE=      # Video source record file name *.mp4, empty for not recording
 
 __usage="
 Usage: $(basename $0) [OPTIONS]
@@ -23,10 +24,11 @@ Options:
   -f, --fileformat <console|file|fifo>                           Output file format
   -p, --sinkfps <fps|nofps>                                      Output FPS counter or not
   -w, --width   <width>                                          Input video width
+  -r, --record  <*.mp4>                                          Video source recording file name
 "
 usage() { echo "$__usage" 1>&2; exit 1; }
 
-while getopts ":i:d:o:f:p:w:" o; do
+while getopts ":i:d:o:f:p:w:r:" o; do
     case "${o}" in
         i|input)
             INPUT=${OPTARG}
@@ -46,6 +48,9 @@ while getopts ":i:d:o:f:p:w:" o; do
         w|width)
             INPUTWIDTH=${OPTARG}
             ;;
+        r|record)
+            SRCRECORDFILE=${OPTARG}
+            ;;
         *)
             usage
             ;;
@@ -60,11 +65,11 @@ else
 fi
 
 if [[ $OUTPUT == *"port="* ]]; then
-  echo "run as client: $(basename $0) -i ${INPUT} -w ${INPUTWIDTH} -o ${OUTPUT}"
+  echo "run as client: $(basename $0) -i ${INPUT} -w ${INPUTWIDTH} -r ${SRCRECORDFILE} -o ${OUTPUT}"
 elif [[ $INPUT == *"port="* ]]; then
   echo "run as server: $(basename $0) -i ${INPUT} -d ${DEVICE} -o ${OUTPUT} -f ${OUTPUTFORMAT} -p ${FPSCOUNTER}"
 else
-  echo "run on single host: $(basename $0) -i ${INPUT} -w ${INPUTWIDTH} -d ${DEVICE} -o ${OUTPUT} -f ${OUTPUTFORMAT} -p ${FPSCOUNTER}"
+  echo "run on single host: $(basename $0) -i ${INPUT} -w ${INPUTWIDTH} -r ${SRCRECORDFILE} -d ${DEVICE} -o ${OUTPUT} -f ${OUTPUTFORMAT} -p ${FPSCOUNTER}"
 fi
 
 METAFILENAME=/tmp/output.json
@@ -82,6 +87,10 @@ elif [[ $INPUT == *"port="* ]]; then
   SOURCE_ELEMENT="udpsrc ${INPUT} caps = \"application/x-rtp, media=(string)video, clock-rate=(int)90000, encoding-name=(string)H264 \" ! rtpjitterbuffer"
 else
   SOURCE_ELEMENT="filesrc location=${INPUT}  ${SOURCE_CONVERT}"
+fi
+
+if [[ $SRCRECORDFILE == *"mp4"* ]]; then
+  SOURCE_ELEMENT="${SOURCE_ELEMENT} ! tee name=t t. ! queue ! x264enc ! mp4mux ! filesink location=${SRCRECORDFILE} -e t. ! queue leaky=1 ! autovideosink sync=false t. ! queue"
 fi
 
 rm -f ${METAFILENAME}
