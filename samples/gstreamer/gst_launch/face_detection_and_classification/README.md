@@ -37,9 +37,9 @@ The sample contains `model_proc` subfolder with .json files for each model with 
 
 ```sh
 ./face_detection_and_classification.sh
-
-https://github.com/joshuazhu78/dlstreamer/blob/1336bc69f44cf6b9851144d10559895765b2843d/samples/gstreamer/gst_launch/face_detection_and_classification/face_detection_and_classification.sh#L18-L27
 ```
+https://github.com/joshuazhu78/dlstreamer/blob/1336bc69f44cf6b9851144d10559895765b2843d/samples/gstreamer/gst_launch/face_detection_and_classification/face_detection_and_classification.sh#L18-L27
+
 The sample takes six command-line *optional* parameters:
 1. [-i] to specify input video file.
 The input could be
