@@ -74,7 +74,7 @@ If parameter is not specified, the sample by default streams video example from 
 
 At the server:
 ```
-$ ./face_detection_and_classification.sh -i port=9001 -o display-and-json -f fifo -p nofps
+$ ./face_detection_and_classification.sh -i port=9001 -o display-and-json -f fifo
 ```
 
 At the client to stream from USB camera:
