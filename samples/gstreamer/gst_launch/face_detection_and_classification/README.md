@@ -40,7 +40,7 @@ The sample contains `model_proc` subfolder with .json files for each model with 
 ```
 https://github.com/joshuazhu78/dlstreamer/blob/1336bc69f44cf6b9851144d10559895765b2843d/samples/gstreamer/gst_launch/face_detection_and_classification/face_detection_and_classification.sh#L18-L27
 
-The sample takes six command-line *optional* parameters:
+The sample takes below command-line *optional* parameters:
 1. [-i] to specify input video file.
 The input could be
 * local video file
@@ -64,10 +64,11 @@ If parameter is not specified, the sample by default streams video example from 
 5. [-p] to choose whether to output FPS or not:
     * fps - count FPS and output (default)
     * nofps - do not count FPS
-6. [-s] to select source video resolution:
+6. [-w] to select source video resolution:
     * not specified - use video source resolution (default)
     * 1280 - for 720P
     * 1920 - for 1080P
+7. [-r] to record the source into a file
 
 ### Run in client/server mode
 
