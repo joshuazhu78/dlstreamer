@@ -61,7 +61,7 @@ shift $((OPTIND-1))
 if [ -z "${INPUTWIDTH}" ]; then
   SOURCE_CONVERT=""
 else
-  SOURCE_CONVERT="! videoconvert ! videoscale ! video/x-raw,width=${INPUTWIDTH},framerate=30/1"
+  SOURCE_CONVERT="! decodebin ! videoconvert ! videoscale ! video/x-raw,width=${INPUTWIDTH},framerate=30/1"
 fi
 
 if [[ $OUTPUT == *"port="* ]]; then
@@ -80,13 +80,18 @@ MODEL3=emotions-recognition-retail-0003
 MODEL4=landmarks-regression-retail-0009
 
 if [[ $INPUT == "/dev/video"* ]]; then
-  SOURCE_ELEMENT="v4l2src device=${INPUT} ! jpegdec ${SOURCE_CONVERT}"
+  JPEG="$(v4l2-ctl -d ${INPUT} --list-formats-ext)"
+  if [[ ${JPEG} == *"jpeg"* ]]; then
+    SOURCE_ELEMENT="v4l2src device=${INPUT} ! jpegdec ${SOURCE_CONVERT}"
+  else
+    SOURCE_ELEMENT="v4l2src device=${INPUT} ${SOURCE_CONVERT}"
+  fi
 elif [[ $INPUT == *"://"* ]]; then
   SOURCE_ELEMENT="urisourcebin buffer-size=4096 uri=${INPUT} ${SOURCE_CONVERT}"
 elif [[ $INPUT == *"port="* ]]; then
-  SOURCE_ELEMENT="udpsrc ${INPUT} caps = \"application/x-rtp, media=(string)video, clock-rate=(int)90000, encoding-name=(string)H264 \" ! rtpjitterbuffer"
+  SOURCE_ELEMENT="udpsrc ${INPUT} caps=\"application/x-rtp, media=(string)video, clock-rate=(int)90000, encoding-name=(string)H264\" ! rtph264depay"
 else
-  SOURCE_ELEMENT="filesrc location=${INPUT}  ${SOURCE_CONVERT}"
+  SOURCE_ELEMENT="filesrc location=${INPUT} ${SOURCE_CONVERT}"
 fi
 
 if [[ $SRCRECORDFILE == *"mp4"* ]]; then
@@ -118,7 +123,7 @@ elif [[ $OUTPUT == "json" ]]; then
 elif [[ $OUTPUT == "display-and-json" ]]; then
   SINK_ELEMENT="gvawatermark ! gvametaconvert ! gvametapublish file-format=json-lines $OUTPUT_PROPERTY ! videoconvert ! $FPSCOUNTER autovideosink sync=false"
 elif [[ $OUTPUT == *"port="* ]]; then
-  SINK_ELEMENT="x264enc ! rtph264pay ! udpsink $OUTPUT"
+  SINK_ELEMENT="x264enc speed-preset=superfast tune=zerolatency ! rtph264pay ! udpsink $OUTPUT"
 else
   echo Error wrong value for OUTPUT parameter
   echo Valid values: "display" - render to screen, "fps" - print FPS, "json" - write to ${METAFILENAME}, "display-and-json" - render to screen and write to ${METAFILENAME}, "host=192.168.251.1 port=9001" - stream video to remote host
@@ -139,10 +144,10 @@ MODEL3_PROC=$(PROC_PATH $MODEL3)
 MODEL4_PROC=$(PROC_PATH $MODEL4)
 
 if [[ $OUTPUT == *"port="* ]]; then
-  PIPELINE="gst-launch-1.0 $SOURCE_ELEMENT ! decodebin ! \
+  PIPELINE="gst-launch-1.0 $SOURCE_ELEMENT ! decodebin ! videoconvert !\
   $SINK_ELEMENT"
 else
-  PIPELINE="gst-launch-1.0 $SOURCE_ELEMENT ! decodebin ! \
+  PIPELINE="gst-launch-1.0 $SOURCE_ELEMENT ! decodebin ! videoconvert ! queue !\
   gvadetect model=$DETECT_MODEL_PATH device=$DEVICE ! queue ! \
   gvaclassify model=$CLASS_MODEL_PATH model-proc=$MODEL2_PROC device=$DEVICE ! queue ! \
   gvaclassify model=$CLASS_MODEL_PATH1 model-proc=$MODEL3_PROC device=$DEVICE ! queue ! \
