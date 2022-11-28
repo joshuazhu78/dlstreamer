@@ -81,7 +81,7 @@ MODEL4=landmarks-regression-retail-0009
 
 if [[ $INPUT == "/dev/video"* ]]; then
   JPEG="$(v4l2-ctl -d ${INPUT} --list-formats-ext)"
-  if [[ ${JPEG} == *"jpeg"* ]]; then
+  if [[ ${JPEG} == *"JPG"* ]]; then
     SOURCE_ELEMENT="v4l2src device=${INPUT} ! jpegdec ${SOURCE_CONVERT}"
   else
     SOURCE_ELEMENT="v4l2src device=${INPUT} ${SOURCE_CONVERT}"
