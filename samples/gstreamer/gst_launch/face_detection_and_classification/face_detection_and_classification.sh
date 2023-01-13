@@ -89,7 +89,7 @@ if [[ $INPUT == "/dev/video"* ]]; then
 elif [[ $INPUT == *"://"* ]]; then
   SOURCE_ELEMENT="urisourcebin buffer-size=4096 uri=${INPUT} ${SOURCE_CONVERT}"
 elif [[ $INPUT == *"port="* ]]; then
-  SOURCE_ELEMENT="udpsrc ${INPUT} caps=\"application/x-rtp, media=(string)video, clock-rate=(int)90000, encoding-name=(string)H264\" ! rtph264depay"
+  SOURCE_ELEMENT="udpsrc ${INPUT} caps=\"application/x-rtp, media=(string)video, clock-rate=(int)90000, encoding-name=(string)H264\" ! rtpjitterbuffer"
 else
   SOURCE_ELEMENT="filesrc location=${INPUT} ${SOURCE_CONVERT}"
 fi
